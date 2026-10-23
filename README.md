@@ -10,6 +10,26 @@ this repo only says how they run together.
 | `https://gastos.<domain>` | Expense tracker (React app) | [expense-tracker-web](https://github.com/SEDEBE/expense-tracker-web) |
 | `https://gastos.<domain>/api/` | Expense tracker API (Django) | [expense-tracker-api](https://github.com/SEDEBE/expense-tracker-api) |
 
+## Run everything locally
+
+With the four repos cloned side by side in one folder (`expense-tracker-api`,
+`expense-tracker-web`, `portfolio-site`, `portfolio-infra`), Docker and Node 24:
+
+```bash
+cd portfolio-infra
+make dev      # API in Docker + app and landing with Vite (hot reload); Ctrl+C to stop them
+make stop     # also stop the API containers
+make help     # other commands (create or change an admin user...)
+```
+
+| URL | What |
+|---|---|
+| http://localhost:5174 | Landing |
+| http://localhost:5173 | Expense tracker app |
+| http://localhost:8000/api/docs/ | API docs (Swagger) |
+| http://localhost:8000/admin/ | Django admin |
+| http://localhost:8025 | Emails sent locally (Mailpit) |
+
 ## Architecture
 
 ```mermaid
