@@ -29,6 +29,8 @@ gastos.{$DOMAIN} {
 	import common
 	@django path /api/* /admin/* /static/*
 	handle @django {
+		# The API, its docs and the admin are not pages to show in search results.
+		header X-Robots-Tag "noindex, nofollow"
 		reverse_proxy api:8000
 	}
 	handle {
@@ -39,5 +41,7 @@ gastos.{$DOMAIN} {
 # Visit statistics (Umami): the dashboard, and the script and endpoint the pages report to.
 estadisticas.{$DOMAIN} {
 	import common
+	# A private dashboard: keep it out of search engines.
+	header X-Robots-Tag "noindex, nofollow"
 	reverse_proxy umami:3000
 }
