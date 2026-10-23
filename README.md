@@ -31,6 +31,7 @@ flowchart LR
   ghcr --> vps
 ```
 
+- Images are public on GHCR (`ghcr.io/sedebe/...`), so the server pulls them without credentials.
 - **Caddy** gets and renews Let's Encrypt certificates by itself and redirects HTTP to HTTPS.
 - The React app and its API share one origin (`gastos.<domain>`), so the browser makes no
   cross-origin requests.
@@ -61,10 +62,7 @@ systemd/                  timer and service that run the backup
    ```
 2. **DNS**: at your domain registrar, create `A` records for `@`, `www` and `gastos` pointing to
    the server's IP (and `AAAA` records if it has IPv6).
-3. **Images**: in GitHub → your profile → Packages, make `expense-tracker-api`,
-   `expense-tracker-web` and `portfolio-site` public (they are published by each repo's CI on
-   every push to `main`).
-4. **Stack**, as `deploy` on the server:
+3. **Stack**, as `deploy` on the server:
    ```bash
    git clone https://github.com/SEDEBE/portfolio-infra.git && cd portfolio-infra
    cp .env.example .env && chmod 600 .env && nano .env     # domain, email, secrets
@@ -72,13 +70,13 @@ systemd/                  timer and service that run the backup
    docker compose ps                                        # everything "healthy"
    docker compose exec api python manage.py createsuperuser
    ```
-5. **Backups**:
+4. **Backups**:
    ```bash
    sudo cp systemd/portfolio-backup.* /etc/systemd/system/
    sudo systemctl daemon-reload && sudo systemctl enable --now portfolio-backup.timer
    systemctl list-timers portfolio-backup.timer
    ```
-6. **Continuous deployment**: create a key used only by CI and restrict it on the server.
+5. **Continuous deployment**: create a key used only by CI and restrict it on the server.
    ```bash
    # On your computer
    ssh-keygen -t ed25519 -N "" -C github-actions-deploy -f ~/.ssh/portfolio_deploy
