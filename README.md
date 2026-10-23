@@ -78,7 +78,6 @@ systemd/                  timer and service that run the backup
    ```bash
    ssh root@SERVER_IP 'bash -s' < scripts/setup-server.sh
    ssh deploy@SERVER_IP        # in a NEW terminal, before closing the root one
-   sudo passwd deploy          # set a sudo password
    ```
 2. **DNS**: at your domain registrar, create `A` records for `@`, `www` and `gastos` pointing to
    the server's IP (and `AAAA` records if it has IPv6).
