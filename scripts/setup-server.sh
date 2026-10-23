@@ -5,6 +5,7 @@
 # It creates the "deploy" user (with your SSH key), hardens SSH, enables the firewall,
 # fail2ban and automatic security updates, installs Docker and adds swap.
 # Keep your root session open and check that `ssh deploy@<server-ip>` works before closing it.
+# Uses Ubuntu 24.04's codename for Docker's repository.
 set -euo pipefail
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -29,6 +30,11 @@ if ! id deploy >/dev/null 2>&1; then
   adduser --disabled-password --gecos "" deploy
 fi
 usermod -aG sudo deploy
+# deploy has no password (it logs in with its SSH key) and will be in the docker group, which is
+# already root-equivalent, so a sudo password would add little: allow sudo without one.
+echo "deploy ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-deploy
+chmod 440 /etc/sudoers.d/90-deploy
+visudo -cf /etc/sudoers.d/90-deploy
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
 install -m 600 -o deploy -g deploy /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
 
@@ -38,8 +44,10 @@ PermitRootLogin no
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 CONF
+# Ubuntu 24.04 starts sshd on demand (socket activation), so its runtime directory may not exist yet.
+install -d -m 0755 /run/sshd
 sshd -t
-systemctl reload ssh
+systemctl try-reload-or-restart ssh
 
 echo "==> Firewall: SSH, HTTP and HTTPS only"
 ufw default deny incoming
@@ -73,4 +81,4 @@ if [ ! -f /swapfile ]; then
 fi
 
 echo
-echo "Done. Next: set a sudo password with 'passwd deploy', then log in as deploy and follow the README."
+echo "Done. Next: log in as deploy (ssh deploy@<server-ip>) and follow the README."
