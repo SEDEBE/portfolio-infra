@@ -124,9 +124,10 @@ banner is needed. It runs on the same server at `estadisticas.<DOMAIN>` and keep
 2. In `.env`, set `UMAMI_DB_PASSWORD` and `UMAMI_APP_SECRET` (`openssl rand -hex 32` each).
 3. Create its database and user, and start it **without** exposing it yet:
    ```bash
-   set -a; . ./.env; set +a
-   docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres \
-     -c "CREATE ROLE umami LOGIN PASSWORD '$UMAMI_DB_PASSWORD'" -c "CREATE DATABASE umami OWNER umami"
+   # .env can't be sourced (DEFAULT_FROM_EMAIL has < >), so read the two values it needs
+   env_get() { grep "^$1=" .env | cut -d= -f2-; }
+   docker compose exec -T db psql -U "$(env_get POSTGRES_USER)" -d postgres \
+     -c "CREATE ROLE umami LOGIN PASSWORD '$(env_get UMAMI_DB_PASSWORD)'" -c "CREATE DATABASE umami OWNER umami"
    docker compose up -d umami
    ```
 4. Umami starts with `admin` / `umami`: replace it before the site is public with
