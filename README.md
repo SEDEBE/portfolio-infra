@@ -114,6 +114,26 @@ systemd/                  timer and service that run the backup
    variables `DEPLOY_HOST` (server IP) and `DEPLOY_USER` (`deploy`), secret `DEPLOY_SSH_KEY`
    (content of `~/.ssh/portfolio_deploy`). The next push to `main` deploys by itself.
 
+## Visit statistics (Umami)
+
+[Umami](https://umami.is) counts visits to the landing and the app without cookies, so no consent
+banner is needed. It runs on the same server at `estadisticas.<DOMAIN>` and keeps its data in an
+`umami` database of the same Postgres (included in the nightly backup). First time only:
+
+1. DNS: `A` / `AAAA` records for `estadisticas` pointing to the server.
+2. In `.env`, set `UMAMI_DB_PASSWORD` and `UMAMI_APP_SECRET` (`openssl rand -hex 32` each).
+3. Create its database and user, and start it **without** exposing it yet:
+   ```bash
+   set -a; . ./.env; set +a
+   docker compose exec -T db psql -U "$POSTGRES_USER" -d postgres \
+     -c "CREATE ROLE umami LOGIN PASSWORD '$UMAMI_DB_PASSWORD'" -c "CREATE DATABASE umami OWNER umami"
+   docker compose up -d umami
+   ```
+4. Umami starts with `admin` / `umami`: replace it before the site is public with
+   `scripts/umami-password.sh` (asks for the password without showing it).
+5. `docker compose up -d caddy` publishes it. Sign in, add the two websites and put their IDs in
+   `VITE_UMAMI_WEBSITE_ID` (`.env.production` of the landing and the app).
+
 ## Day to day
 
 ```bash

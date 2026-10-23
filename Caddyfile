@@ -35,3 +35,9 @@ gastos.{$DOMAIN} {
 		reverse_proxy web:80
 	}
 }
+
+# Visit statistics (Umami): the dashboard, and the script and endpoint the pages report to.
+estadisticas.{$DOMAIN} {
+	import common
+	reverse_proxy umami:3000
+}
