@@ -95,7 +95,15 @@ systemd/                  timer and service that run the backup
    sudo systemctl daemon-reload && sudo systemctl enable --now portfolio-backup.timer
    systemctl list-timers portfolio-backup.timer
    ```
-5. **Continuous deployment**: create a key used only by CI and restrict it on the server.
+5. **Email** with [Resend](https://resend.com): add the domain (region eu-west-1) and create its DNS
+   records (DKIM `TXT`, the two `CNAME`s for sending, `_dmarc` `TXT`). Once it shows *Verified*,
+   create a *Sending access* API key and store it without echoing it:
+   ```bash
+   read -rsp "Resend API key: " K && echo && sed -i "s|^EMAIL_URL=.*|EMAIL_URL=smtp+tls://resend:$K@smtp.resend.com:587|" .env
+   docker compose up -d api worker beat
+   docker compose exec api python manage.py sendtestemail you@example.com
+   ```
+6. **Continuous deployment**: create a key used only by CI and restrict it on the server.
    ```bash
    # On your computer
    ssh-keygen -t ed25519 -N "" -C github-actions-deploy -f ~/.ssh/portfolio_deploy
