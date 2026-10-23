@@ -1,0 +1,11 @@
+[Unit]
+Description=Back up the portfolio Postgres database every night
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=10m
+# If the server was off at 03:30, run the backup as soon as it starts.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
