@@ -10,6 +10,8 @@ x-api: &api
     CELERY_BROKER_URL: redis://redis:6379/0
     ALLOWED_HOSTS: gastos.${DOMAIN},localhost
     CSRF_TRUSTED_ORIGINS: https://gastos.${DOMAIN}
+    # The landing's live console calls the API from the root domain.
+    CORS_ALLOWED_ORIGINS: https://${DOMAIN}
     # Caddy is the only proxy in front of Django; throttling uses the client IP it forwards.
     NUM_PROXIES: "1"
     DEMO_ENABLED: "True"
