@@ -18,7 +18,7 @@ With the four repos cloned side by side in one folder (`expense-tracker-api`,
 ```bash
 cd portfolio-infra
 make dev      # API in Docker + app and landing with Vite (hot reload); Ctrl+C to stop them
-make stop     # also stop the API containers
+make stop     # also stop the API containers (make down works too)
 make help     # other commands (create or change an admin user...)
 ```
 

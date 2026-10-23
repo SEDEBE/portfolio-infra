@@ -10,10 +10,12 @@ dev:  ## Run everything locally: API in Docker, app and landing with Vite
 stop:  ## Stop the local API containers
 	cd $(API_DIR) && docker compose down
 
+down: stop  ## Same as make stop
+
 superuser:  ## Create a Django admin user in the local API
 	cd $(API_DIR) && docker compose exec api python manage.py createsuperuser
 
 password:  ## Change a local admin password: make password EMAIL=you@example.com
 	cd $(API_DIR) && docker compose exec api python manage.py changepassword $(EMAIL)
 
-.PHONY: help dev stop superuser password
+.PHONY: help dev stop down superuser password
