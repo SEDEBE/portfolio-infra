@@ -114,6 +114,16 @@ systemd/                  timer and service that run the backup
    variables `DEPLOY_HOST` (server IP) and `DEPLOY_USER` (`deploy`), secret `DEPLOY_SSH_KEY`
    (content of `~/.ssh/portfolio_deploy`). The next push to `main` deploys by itself.
 
+## Monitoring
+
+- **Errors**: the API reports unhandled errors to Sentry when `SENTRY_DSN` is set in `.env`
+  (restart `api worker beat` after changing it). The web app's DSN is a build-time value in its own
+  repo (`.env.production`).
+- **Uptime**: an external service (UptimeRobot) checks the landing, the app and
+  `https://gastos.<DOMAIN>/api/health/` every 5 minutes; the health check answers `503` when the
+  database is unreachable, so a database outage alerts too. Being outside the server, it still
+  alerts if the whole server is down.
+
 ## Visit statistics (Umami)
 
 [Umami](https://umami.is) counts visits to the landing and the app without cookies, so no consent
