@@ -1,0 +1,96 @@
+# Production stack on the VPS. Every app image is built and published to GHCR by its own repo's CI;
+# this file only pulls and runs them. Secrets come from .env (see .env.example), never from git.
+
+x-api: &api
+  image: ghcr.io/sedebe/expense-tracker-api:latest
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    CELERY_BROKER_URL: redis://redis:6379/0
+    ALLOWED_HOSTS: gastos.${DOMAIN},localhost
+    CSRF_TRUSTED_ORIGINS: https://gastos.${DOMAIN}
+    # Caddy is the only proxy in front of Django; throttling uses the client IP it forwards.
+    NUM_PROXIES: "1"
+    DEMO_ENABLED: "True"
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # HTTPS certificates
+      - caddy_config:/config
+    depends_on: [landing, web, api]
+
+  landing:
+    image: ghcr.io/sedebe/portfolio-site:latest
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/sedebe/expense-tracker-web:latest
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: http://api:8000
+
+  api:
+    <<: *api
+
+  worker:
+    <<: *api
+    command: celery -A config worker --loglevel info --concurrency 2
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping --destination celery@$$HOSTNAME"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  beat:
+    <<: *api
+    # Exactly one beat, or every scheduled task would run twice.
+    command: celery -A config beat --loglevel info --schedule /tmp/celerybeat-schedule
+    healthcheck:
+      disable: true
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
