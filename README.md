@@ -58,6 +58,13 @@ flowchart LR
 - Only ports 22, 80 and 443 are open. Postgres and Redis are only reachable inside Docker's network.
 - The CI deploy key is limited by `scripts/ci-deploy.sh`: it can only run `deploy.sh` with a
   known service name, never open a shell.
+- Every page gets a **Content-Security-Policy** that lists the only origins it may load scripts
+  from, send requests to and frame (Google's sign-in button, Sentry, Umami), and forbids other
+  sites from framing it (clickjacking). If injected code ever ran in the app, it could not send
+  the session tokens anywhere else. Swagger UI under `/api/docs/` loads its own scripts, so the
+  API paths keep Django's headers instead.
+- The Django admin is not at `/admin/` but at `/<ADMIN_PATH>/` (from `.env`), and after 5 failed
+  logins an IP waits 15 minutes. Rate limits and that lockout are counted in Redis.
 
 ## Files
 
