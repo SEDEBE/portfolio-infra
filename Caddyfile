@@ -41,7 +41,8 @@ www.{$DOMAIN} {
 # Expense tracker: the React app and its API share one origin, so the browser needs no CORS.
 gastos.{$DOMAIN} {
 	import common
-	@django path /api/* /admin/* /static/*
+	# The admin's path is ADMIN_PATH from .env, not the /admin/ that bots scan for.
+	@django path /api/* /{$ADMIN_PATH}/* /static/*
 	handle @django {
 		# The API, its docs and the admin are not pages to show in search results.
 		header X-Robots-Tag "noindex, nofollow"

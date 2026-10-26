@@ -8,6 +8,8 @@ x-api: &api
   environment:
     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     CELERY_BROKER_URL: redis://redis:6379/0
+    # Rate limits and the admin lockout, shared by every gunicorn worker.
+    CACHE_URL: redis://redis:6379/1
     ALLOWED_HOSTS: gastos.${DOMAIN},localhost
     CSRF_TRUSTED_ORIGINS: https://gastos.${DOMAIN}
     # The landing's live console calls the API from the root domain.
@@ -34,6 +36,8 @@ services:
     environment:
       DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
+      # Same value the API reads from .env: Caddy sends that path to Django.
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data # HTTPS certificates
