@@ -74,7 +74,7 @@ Caddyfile                 sites, routing and security headers
 deploy.sh                 pull and restart some services (used by CI)
 scripts/setup-server.sh   first-time hardening of a fresh Ubuntu 24.04 server
 scripts/ci-deploy.sh      forced command for the CI deploy key
-scripts/backup.sh         nightly pg_dump, keeps 14 days
+scripts/backup.sh         nightly pg_dump, keeps 14 days, readable only by its owner
 systemd/                  timer and service that run the backup
 .env.example              settings and secrets to fill in on the server
 ```
