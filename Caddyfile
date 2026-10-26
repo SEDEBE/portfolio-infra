@@ -10,13 +10,27 @@
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), usb=()"
 		-Server
+	}
+}
+
+# Content-Security-Policy for the pages: scripts, requests and frames only from the origins each
+# page needs, so injected code can't load or send anything elsewhere, and no other site can frame
+# them (clickjacking). X-Frame-Options covers old browsers. Styles allow inline blocks (the 404
+# page has one); scripts never do.
+(pages) {
+	header {
+		X-Frame-Options DENY
+		Content-Security-Policy "default-src 'self'; script-src 'self' {args[0]}; style-src 'self' 'unsafe-inline' {args[1]}; img-src 'self' data: blob: {args[2]}; font-src 'self' data:; connect-src 'self' {args[3]}; frame-src {args[4]}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 	}
 }
 
 # Portfolio landing page
 {$DOMAIN} {
 	import common
+	# The live console calls the expense tracker's API; Umami counts the visit.
+	import pages https://estadisticas.{$DOMAIN} "" "" "https://gastos.{$DOMAIN} https://estadisticas.{$DOMAIN}" "'none'"
 	reverse_proxy landing:80
 }
 
@@ -34,6 +48,9 @@ gastos.{$DOMAIN} {
 		reverse_proxy api:8000
 	}
 	handle {
+		# Only the React app gets the policy: Swagger UI under /api/docs/ loads its own scripts.
+		# Google's button (script, styles, iframe), Sentry error reports and Umami.
+		import pages "https://accounts.google.com/gsi/client https://estadisticas.{$DOMAIN}" https://accounts.google.com/gsi/style https://*.googleusercontent.com "https://accounts.google.com/gsi/ https://*.ingest.de.sentry.io https://estadisticas.{$DOMAIN}" https://accounts.google.com/gsi/
 		reverse_proxy web:80
 	}
 }
@@ -43,5 +60,7 @@ estadisticas.{$DOMAIN} {
 	import common
 	# A private dashboard: keep it out of search engines.
 	header X-Robots-Tag "noindex, nofollow"
+	# Umami's dashboard has a login form: no other site may frame it.
+	header X-Frame-Options DENY
 	reverse_proxy umami:3000
 }
