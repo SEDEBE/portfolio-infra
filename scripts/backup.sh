@@ -5,7 +5,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# The dumps hold every user's data: only the owner may read them. umask covers the new files;
+# chmod fixes the folder and any dump made before this line existed.
+umask 077
 mkdir -p backups
+chmod -R go= backups
 file="backups/db-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
 # The credentials are already in the db container's environment, so .env isn't parsed here.
 docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" --clean --if-exists "$POSTGRES_DB"' | gzip > "$file"
